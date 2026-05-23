@@ -2,8 +2,6 @@
 
 How the three steps of [iLearn](./README.md) produced a working hand-gesture-controlled drone, built by someone who had never soldered, never used a multimeter, and didn't know what a DAC was.
 
-The README is the manifesto. This is the receipts.
-
 ---
 
 ## Starting position
@@ -11,7 +9,6 @@ The README is the manifesto. This is the receipts.
 - Software background: Python, a code editor (Cursor). That's it.
 - Hardware background: zero. No electronics. No soldering. Never read a circuit diagram.
 - Trigger: saw a 2018 Arduino "mind-control drone" project. Wanted a modernized version.
-- Time horizon: months. I didn't rush.
 
 The final build: MacBook webcam tracks my hand, Python script sends commands over USB to a Raspberry Pi Pico, the Pico drives a DAC chip soldered into a hacked toy drone controller, the drone hovers and obeys my hand.
 
@@ -26,10 +23,6 @@ First prompt, weeks before I bought a single part:
 > *"How should i start learning how to build a drone from scratch with no prior experience in hardware."*
 
 AI pointed me at simulators, kits before custom builds, soldering practice, basic electronics (voltage, current, spec sheets).
-
-I bought none of it. I just read and asked questions. When I finally did buy parts, I knew what they were for.
-
-This was step 1 of the framework in its purest form: dump the goal, get the landscape.
 
 ---
 
@@ -67,7 +60,7 @@ The keystone phrase again. Not just for the first prompt. Every scope change des
 
 ## Step 3. Hardware bring-up, LEGO mode
 
-After the design converged, I asked for step-by-step instructions detailed enough to follow with no prior context. It felt like **following LEGO instructions.** I wasn't designing anymore. I was complying.
+After the design converged, I asked for step-by-step instructions detailed enough to follow with no prior context. It felt like **following LEGO instructions.**
 
 Wired the Pico to the DAC on a breadboard:
 
@@ -90,11 +83,9 @@ AI's first response assumed display ambiguity. Maybe it was actually 1.6 V displ
 
 > *"mV."*
 
-That's it. AI went back, re-read its own code, and found a **bit-packing bug.** Config bits were colliding with data bits, accidentally enabling an internal voltage reference and zeroing the value. Fixed version: 1.65 V exactly.
+AI went back, re-read its own code, and found a **bit-packing bug.** Config bits were colliding with data bits, accidentally enabling an internal voltage reference and zeroing the value. Fixed version: 1.65 V exactly.
 
 I would have missed that bug if I'd said "it didn't work" or rounded to "1.6." Reporting literally, with the unit, is what let AI debug itself.
-
-This is the line from the README: *summarize and AI guesses; report literally and AI debugs.* This is where I learned it.
 
 ---
 
@@ -114,12 +105,14 @@ Same cycle, repeated dozens of times:
 
 Result:
 
+
 | Channel  | Wiper pads | Min (mV) | Rest (mV) | Max (mV) |
 | -------- | ---------- | -------- | --------- | -------- |
 | Throttle | L2/L3      | 292      | 310       | 366      |
 | Yaw      | L5/L6      | 290      | 310       | 366      |
 | Pitch    | R4/R5      | 290      | 309       | 365      |
 | Roll     | R2/R3      | 289      | 308       | 365      |
+
 
 I caught one important PCB-orientation gotcha along the way: viewed from the back, left/right are mirrored. AI flagged it. I verified with a continuity check (B− to battery negative) before soldering. **Do, then understand.** I didn't need to understand the mirror at first, I just needed to be told to check.
 
@@ -137,7 +130,7 @@ AI stopped suggesting fixes and started asking five specific yes/no state questi
 
 I answered concretely. The bottleneck was identified in two turns.
 
-The diagnosis was beautiful and counterintuitive. The toy controller's chip uses **pulsed ADC sampling.** During flight, the DAC can overpower the joystick pot. During binding, the chip's impedance check needs the pot's reference circuit physically intact. DAC alone can never bind.
+It turns out the toy controller's chip uses **pulsed ADC sampling.** During flight, the DAC can overpower the joystick pot. During binding, the chip's impedance check needs the pot's reference circuit physically intact. DAC alone can never bind.
 
 The fix: hybrid setup. Keep the left joystick fully installed (binding needs it). Reinstall the right joystick but cut the wiper tabs of R2 and R4 so the DAC owns pitch/roll cleanly during flight while the reference circuit stays intact.
 
@@ -157,17 +150,13 @@ Doing first. Understanding second. That's the order.
 
 The final pivot. Hand tracking for throttle only. Physical joysticks for pitch, roll, yaw. Webcam to MediaPipe to hand-openness score (0.0 to 1.0) to Python to Pico to DAC channel 0 to blue wire on the L2 throttle pad.
 
-Closed fist is throttle 0. Half-open hand is hover (DAC value 2048, the 1.65 V midpoint I'd hard-won earlier). Fully spread is throttle high.
-
-Hand leaves the frame, throttle cuts off. Keyboard `K` killswitch. Hover is the default. Fail-safe by design.
+Fingers pointing down is throttle 0. Fist is hover (DAC value 2048, the 1.65 V midpoint I'd hard-won earlier). Fingers pointing up is throttle high.
 
 I documented everything in `HAND_TRACKING_THROTTLE_PRD.md` and handed it to a coding agent to implement. The PRD included the hard-won gotchas (neutral DAC is 2048 not 4095, MicroPico kills `main.py` on connect and I lost hours to that, arrow keys could accidentally trigger the bind command) so the next person doesn't lose the same hours.
 
 ---
 
 ## What I want you to notice
-
-The drone is impressive. The method is replicable.
 
 I didn't:
 
@@ -186,4 +175,4 @@ I did:
 - Pick the harder path (toy drone plus DAC) over the easier one (Tello plus SDK) because I wanted to learn
 - Ask "what is this called?" and "explain what we just did and why" after every milestone
 
-Every one of those is from the [iLearn framework](./README.md). The drone is the proof. Now go pick your own thing.
+Every one of those is from the [iLearn framework](./README.md).
